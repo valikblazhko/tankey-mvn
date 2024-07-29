@@ -1,0 +1,93 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.mangrove",
+    "module": "support",
+    "version": "3.4.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.4"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "files": [
+        {
+          "name": "support-3.4.0.aar",
+          "url": "support-3.4.0.aar",
+          "size": 157900,
+          "sha512": "146bdb813135e1315d74a159a27fd912c11b5310351bf8833eaed7392a61e0fe5027a201dbbbf8c29f60610e1e5671843a15931a71f22b724a8f76e7de729664",
+          "sha256": "7161d01ee6810b7c51ad6c1f185672de30fd60ed34d29b319085fe66e2de3e2a",
+          "sha1": "97823ee8343e968aa5b369471dba24c0907a6b38",
+          "md5": "1d4c58700ea65ccf47b40db41b3fd9c0"
+        }
+      ]
+    },
+    {
+      "name": "releaseRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.7.22"
+          }
+        },
+        {
+          "group": "com.google.android.gms",
+          "module": "play-services-location",
+          "version": {
+            "requires": "21.0.1"
+          }
+        },
+        {
+          "group": "com.android.support",
+          "module": "appcompat-v7",
+          "version": {
+            "requires": "27.1.1"
+          }
+        },
+        {
+          "group": "com.android.support",
+          "module": "recyclerview-v7",
+          "version": {
+            "requires": "27.1.1"
+          }
+        },
+        {
+          "group": "com.android.support.constraint",
+          "module": "constraint-layout",
+          "version": {
+            "requires": "1.1.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "support-3.4.0.aar",
+          "url": "support-3.4.0.aar",
+          "size": 157900,
+          "sha512": "146bdb813135e1315d74a159a27fd912c11b5310351bf8833eaed7392a61e0fe5027a201dbbbf8c29f60610e1e5671843a15931a71f22b724a8f76e7de729664",
+          "sha256": "7161d01ee6810b7c51ad6c1f185672de30fd60ed34d29b319085fe66e2de3e2a",
+          "sha1": "97823ee8343e968aa5b369471dba24c0907a6b38",
+          "md5": "1d4c58700ea65ccf47b40db41b3fd9c0"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,207 @@
+default_platform(:android)
+
+before_all do |lane, options|
+  # because Ruby is retarded and has no Elvis operator
+  options[:notifications] = true if options[:notifications].nil?
+  options[:ignore_git_status] = false if options[:ignore_git_status].nil?
+
+  UI.message 'Validating environment variables'
+
+  if validate_environment
+    UI.success 'Environment properly configured'
+  else
+    UI.user_error! 'Environment not properly configured'
+  end
+
+  ensure_git_status_clean unless options[:ignore_git_status]
+  validate_current_git_branch unless options[:ignore_git_branch]
+end
+
+desc 'Execute unit and UI tests'
+lane :test do |options|
+  UI.user_error! 'This feature is not yet implemented'
+end
+
+desc 'Submit a new Beta Build to Crashlytics Beta'
+lane :beta do |options|
+  increment_version(options)
+  build
+  upload_to_crashlytics
+
+  tag_string = get_commit_tag
+  UI.message "git tag: #{tag_string}"
+  git_commit(path: get_version_filename, message: 'Version Bump')
+  add_git_tag(tag: tag_string)
+  push_to_git_remote
+  clean_build_artifacts
+  # reset_git_repo
+
+  notify_success options
+end
+
+desc 'Submit a new Production Build to iTunesConnect'
+lane :deploy do |options|
+  UI.user_error! 'This feature is not yet implemented'
+end
+
+error do |lane, exception, options|
+  return unless options[:notifications]
+  slack(
+    message: exception.message,
+    success: false
+  )
+end
+
+
+def self.validate_current_git_branch
+  if %w[development acceptance].include? ENV['ENVIRONMENT']
+    ensure_git_branch(branch: 'develop')
+  else
+    ensure_git_branch(branch: 'master')
+  end
+end
+
+def self.get_commit_tag
+  version_name = get_version_name
+  version_code = get_version_code
+
+  "#{ENV['ENVIRONMENT'].downcase}/#{version_name}-#{version_code}"
+end
+
+def self.notify_success(options)
+  return unless options[:notifications]
+
+  version_name = get_version_name
+  version_code = get_version_code
+
+  slack(
+    message: 'Hurray! App distributed.',
+    success: true,
+    default_payloads: %i[lane test_result last_git_commit_hash],
+    attachment_properties: {
+      fields: [
+        {
+          title: 'Application',
+          value: ENV['APP_IDENTIFIER'],
+          short: true
+        },
+        {
+          title: 'Version',
+          value: "#{version_name} (#{version_code})",
+          short: true
+        }
+      ]
+    }
+  )
+end
+
+
+platform :android do
+  def self.validate_environment
+    valid = true
+
+    if ENV['MODULE'].nil?
+      UI.error 'Module not configured'
+      valid = false
+    end
+
+    if ENV['ENVIRONMENT'].nil?
+      UI.error 'Environment not configured'
+      valid = false
+    else
+      unless %w[development acceptance production].include? ENV['ENVIRONMENT']
+        UI.error "Environment value is invalid: #{ENV['ENVIRONMENT']}"
+        valid = false
+      end
+    end
+
+    valid
+  end
+
+  def self.increment_version(options)
+    version = get_version
+
+    # always increment build code
+    version[:code] = version[:code].to_i + 1
+
+    increment = options[:increment]
+    if increment == 'major'
+      version[:major] = version[:major].to_i + 1
+      version[:minor] = 0
+      version[:patch] = 0
+    elsif increment == 'minor'
+      version[:minor] = version[:minor].to_i + 1
+      version[:patch] = 0
+    elsif increment == 'patch'
+      version[:patch] = version[:patch].to_i + 1
+    end
+
+    # save to file
+    save_version(version)
+  end
+
+  def self.save_version(version)
+    Dir.chdir("..") do
+      # code here runs in the parent directory
+      filename = get_version_filename
+
+      File.open(filename, "w") do |f|
+        f << "code=#{version[:code]}\nmajor=#{version[:major]}\nminor=#{version[:minor]}\npatch=#{version[:patch]}\n"
+      end
+    end
+  end
+
+  def self.get_version_filename
+    "#{ENV['MODULE']}/version.properties"
+  end
+
+  def self.get_version
+    hash = {}
+
+    Dir.chdir("..") do
+      # code here runs in the parent directory
+      filename = get_version_filename
+
+      if (File.file?(filename))
+        hash = Hash[*File.read(filename).split(/[=\n]+/)]
+      end
+    end
+
+    {
+      code: hash["code"] || 0,
+      major: hash["major"] || 0,
+      minor: hash["minor"] || 0,
+      patch: hash["patch"] || 0
+    }
+  end
+
+  def self.get_version_name
+    version = get_version
+    "#{version[:major]}.#{version[:minor]}.#{version[:patch]}"
+  end
+
+  def self.get_version_code
+    version = get_version
+    version[:code]
+  end
+
+  def self.build
+    # ensure we have a clean project
+    gradle(task: 'clean')
+    UI.message 'Clean project, now it\'s safe to proceed'
+
+    gradle(
+      task: ":#{ENV['MODULE']}:assemble",
+      flavor: ENV['ENVIRONMENT'],
+      build_type: 'Release'
+    )
+
+    UI.success('APK successfully built ✅')
+    UI.message(Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH])
+  end
+
+  def self.upload_to_crashlytics
+    crashlytics(groups: ENV['GROUPS'])
+  end
+
+end

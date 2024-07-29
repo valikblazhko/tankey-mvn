@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>com.mangrove.support</groupId>
+  <artifactId>distributions</artifactId>
+  <versioning>
+    <release>4.0.0</release>
+    <versions>
+      <version>4.0.0</version>
+    </versions>
+    <lastUpdated>20180927082214</lastUpdated>
+  </versioning>
+</metadata>

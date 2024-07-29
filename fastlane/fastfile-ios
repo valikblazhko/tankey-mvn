@@ -1,0 +1,191 @@
+default_platform(:ios)
+
+before_all do |lane, options|
+  # because Ruby is retarded and has no Elvis operator
+  options[:notifications] = true if options[:notifications].nil?
+  options[:ignore_git_status] = false if options[:ignore_git_status].nil?
+
+  UI.message 'Validating environment variables'
+
+  if validate_environment
+    UI.success 'Environment properly configured'
+  else
+    UI.user_error! 'Environment not properly configured'
+  end
+
+  ensure_git_status_clean unless options[:ignore_git_status]
+  validate_current_git_branch unless options[:ignore_git_branch]
+end
+
+desc 'Execute unit and UI tests'
+lane :test do |options|
+  UI.user_error! 'This feature is not yet implemented'
+end
+
+desc 'Submit a new Beta Build to Crashlytics Beta'
+lane :beta do |options|
+  increment_version(options)
+  build
+  upload_to_crashlytics
+
+  tag_string = get_commit_tag
+  UI.message "git tag: #{tag_string}"
+  git_commit(path: get_version_filename, message: 'Version Bump')
+  add_git_tag(tag: tag_string)
+  push_to_git_remote
+  clean_build_artifacts
+  # reset_git_repo
+
+  notify_success options
+end
+
+desc 'Submit a new Production Build to iTunesConnect'
+lane :deploy do |options|
+  UI.user_error! 'This feature is not yet implemented'
+end
+
+error do |lane, exception, options|
+  return unless options[:notifications]
+  slack(
+    message: exception.message,
+    success: false
+  )
+end
+
+
+def self.validate_current_git_branch
+  if %w[development acceptance].include? ENV['ENVIRONMENT']
+    ensure_git_branch(branch: 'develop')
+  else
+    ensure_git_branch(branch: 'master')
+  end
+end
+
+def self.get_commit_tag
+  version_name = get_version_name
+  version_code = get_version_code
+
+  "#{ENV['ENVIRONMENT'].downcase}/#{version_name}-#{version_code}"
+end
+
+def self.notify_success(options)
+  return unless options[:notifications]
+
+  version_name = get_version_name
+  version_code = get_version_code
+
+  slack(
+    message: 'Hurray! App distributed.',
+    success: true,
+    default_payloads: %i[lane test_result last_git_commit_hash],
+    attachment_properties: {
+      fields: [
+        {
+          title: 'Application',
+          value: ENV['APP_IDENTIFIER'],
+          short: true
+        },
+        {
+          title: 'Version',
+          value: "#{version_name} (#{version_code})",
+          short: true
+        }
+      ]
+    }
+  )
+end
+
+
+platform :ios do
+
+  desc 'Fetch all certificates and provisioning profiles required for all Tankey environments'
+  lane :setup_certificates do
+    # fetch certificates and provisioning profiles for the given environment
+    match(
+      type: ENV['TYPE'],
+      app_identifier: ENV['APP_IDENTIFIER'],
+      git_url: ENV['CERTIFICATES_GIT_URL'],
+      git_branch: ENV['CERTIFICATES_GIT_BRANCH'],
+      username: ENV['CERTIFICATES_GIT_USER'],
+      team_id: ENV['TEAM_ID'],
+      readonly: true
+    )
+  end
+
+  def self.validate_environment
+    valid = true
+
+    if ENV['MODULE'].nil?
+      UI.error 'Module not configured'
+      valid = false
+    end
+
+    if ENV['TYPE'].nil?
+      UI.error 'Type not configured'
+      valid = false
+    else
+      unless %w[development enterprise appstore].include? ENV['TYPE']
+        UI.error "Type value is invalid: #{ENV['TYPE']}"
+        valid = false
+      end
+    end
+
+    if ENV['ENVIRONMENT'].nil?
+      UI.error 'Environment not configured'
+      valid = false
+    else
+      unless %w[development acceptance production].include? ENV['ENVIRONMENT']
+        UI.error "Environment value is invalid: #{ENV['ENVIRONMENT']}"
+        valid = false
+      end
+    end
+
+    valid
+  end
+
+  def self.increment_version(options)
+    # increment version number if specified
+    if %w[major minor patch].include? options[:increment]
+      increment_version_number_in_plist(bump_type: options[:increment])
+
+      # reset the build number to one
+      increment_build_number_in_plist(build_number: 1)
+    else
+      # always increment build number
+      increment_build_number_in_plist
+    end
+  end
+
+  def self.get_version_filename
+    "#{ENV['MODULE']}/Info.plist"
+  end
+
+  def self.get_version_name
+    get_version_number_from_plist
+  end
+
+  def self.get_version_code
+    get_build_number_from_plist
+  end
+
+  def self.build
+    # fixes enum value for gym
+    export_method = ENV['TYPE'] == 'appstore' ? 'app-store' : ENV['TYPE']
+
+    gym(
+      scheme: ENV['MODULE'],
+      configuration: ENV['ENVIRONMENT'].capitalize,
+      export_method: export_method,
+      clean: true,
+      include_bitcode: true,
+      include_symbols: true,
+      silent: true
+    )
+  end
+
+  def self.upload_to_crashlytics
+    crashlytics(groups: ENV['GROUPS'])
+    upload_symbols_to_crashlytics
+  end
+
+end

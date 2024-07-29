@@ -1,0 +1,113 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.mangrove.support",
+    "module": "core",
+    "version": "4.0.2",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.6"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "files": [
+        {
+          "name": "core-4.0.2.aar",
+          "url": "core-4.0.2.aar",
+          "size": 64714,
+          "sha512": "51fce79b0bc351f102c0d3c46a3316834d5880e3405c4860b275dce16fb36d853cd14ae312f3182f44f1eef76636793dd027dfb257496f2a15b4ec477f5f58d7",
+          "sha256": "ba5deb576cadac94afb61c447e9176d4947cb641439c29da69629956a8ff4fce",
+          "sha1": "d1954597d818af6627f170bde5951d6a1a43ff06",
+          "md5": "cda038ec47b5f251683f112855110c53"
+        }
+      ]
+    },
+    {
+      "name": "releaseRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.8.0-Beta"
+          }
+        },
+        {
+          "group": "com.google.android.gms",
+          "module": "play-services-location",
+          "version": {
+            "requires": "21.0.1"
+          }
+        },
+        {
+          "group": "androidx.appcompat",
+          "module": "appcompat",
+          "version": {
+            "requires": "1.5.1"
+          }
+        },
+        {
+          "group": "androidx.recyclerview",
+          "module": "recyclerview",
+          "version": {
+            "requires": "1.2.1"
+          }
+        },
+        {
+          "group": "androidx.constraintlayout",
+          "module": "constraintlayout",
+          "version": {
+            "requires": "2.1.4"
+          }
+        },
+        {
+          "group": "com.mangrove.support",
+          "module": "widgets",
+          "version": {
+            "requires": "4.0.0"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "widgets",
+              "type": "arr",
+              "extension": "arr"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "core-4.0.2.aar",
+          "url": "core-4.0.2.aar",
+          "size": 64714,
+          "sha512": "51fce79b0bc351f102c0d3c46a3316834d5880e3405c4860b275dce16fb36d853cd14ae312f3182f44f1eef76636793dd027dfb257496f2a15b4ec477f5f58d7",
+          "sha256": "ba5deb576cadac94afb61c447e9176d4947cb641439c29da69629956a8ff4fce",
+          "sha1": "d1954597d818af6627f170bde5951d6a1a43ff06",
+          "md5": "cda038ec47b5f251683f112855110c53"
+        }
+      ]
+    }
+  ]
+}
